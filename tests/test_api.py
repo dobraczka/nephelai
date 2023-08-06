@@ -1,9 +1,10 @@
 import pathlib
+import os
 
 import numpy as np
 import owncloud
 import pytest
-from dotenv import dotenv_values
+from dotenv import load_dotenv
 
 from nephelai import download, upload
 from nephelai.api import NEXTCLOUD_FOLDER_PW_KEY, NEXTCLOUD_FOLDER_URI_KEY
@@ -16,10 +17,10 @@ def cleanup():
     # before test
     yield  # run test
     # after test
-    config = dotenv_values()
+    load_dotenv()
     oc = owncloud.Client.from_public_link(
-        config[NEXTCLOUD_FOLDER_URI_KEY],
-        folder_password=config[NEXTCLOUD_FOLDER_PW_KEY],
+        os.environ[NEXTCLOUD_FOLDER_URI_KEY],
+        folder_password=os.environ[NEXTCLOUD_FOLDER_PW_KEY],
     )
     oc.delete(str(pathlib.Path(remote_tmpdir).parent))
 
