@@ -21,7 +21,12 @@ FileStateExists: Final = "FILE_EXISTS_AND_IS_NOT_DIR"
 FileStateExistsChunked: Final = "FILE_IS_CHUNKED"
 FileStateIsDirUnchunked: Final = "FILE_IS_UNCHUNKED_DIR"
 FileStateDoesNotExist: Final = "FILE_DOES_NOT_EXIST"
-FileState = Literal["FILE_EXISTS_AND_IS_NOT_DIR", "FILE_IS_CHUNKED", "FILE_IS_UNCHUNKED_DIR", "FILE_DOES_NOT_EXIST"]
+FileState = Literal[
+    "FILE_EXISTS_AND_IS_NOT_DIR",
+    "FILE_IS_CHUNKED",
+    "FILE_IS_UNCHUNKED_DIR",
+    "FILE_DOES_NOT_EXIST",
+]
 
 
 def _remove_commonpath(full_path: str, base: str):
@@ -76,6 +81,9 @@ def chunked_upload(
 
     Returns:
         True if successful
+
+    Raises:
+        ServerError: owncloud.owncloud.HTTPResponseError if server throws error
     """
     result = True
 
@@ -84,7 +92,9 @@ def chunked_upload(
         remote_path += os.path.basename(local_source_file)
 
     original_remote_path = remote_path
-    create_nc_folders(my_dir=pathlib.Path(original_remote_path).parent, nc_client=nc_client)
+    create_nc_folders(
+        my_dir=pathlib.Path(original_remote_path).parent, nc_client=nc_client
+    )
     remote_path += CHUNKED_SUFFIX + "/"
 
     stat_result = os.stat(local_source_file)
@@ -95,7 +105,9 @@ def chunked_upload(
 
     if size <= chunk_size:
         return nc_client.put_file(
-            remote_path=original_remote_path, local_source_file=local_source_file, chunked=False
+            remote_path=original_remote_path,
+            local_source_file=local_source_file,
+            chunked=False,
         )
 
     file_handle.seek(0)
@@ -106,7 +118,9 @@ def chunked_upload(
         headers["X-OC-MTIME"] = str(int(stat_result.st_mtime))
 
     if size == 0:
-        return nc_client._make_dav_request("PUT", original_remote_path, data="", headers=headers)
+        return nc_client._make_dav_request(
+            "PUT", original_remote_path, data="", headers=headers
+        )
 
     try:
         chunk_count = int(math.ceil(float(size) / float(chunk_size)))
@@ -118,10 +132,10 @@ def chunked_upload(
             ):
                 result = False
                 break
-    except owncloud.owncloud.HTTPResponseError as err:
+    except owncloud.owncloud.HTTPResponseError as ServerError:
         nc_client.delete(remote_path)
         file_handle.close()
-        raise err
+        raise ServerError
     file_handle.close()
     return result
 
@@ -172,6 +186,7 @@ def upload(
         chunked_upload(oc, file_to_upload, nc_path, chunk_size=chunk_size)
     return True
 
+
 def _chunked_download(oc: owncloud.Client, remote_path: str, local_path: str):
     try:
         if os.path.exists(local_path):
@@ -193,7 +208,9 @@ def _chunked_download(oc: owncloud.Client, remote_path: str, local_path: str):
 def _check_file_state_from_file_info(
     file_info: owncloud.FileInfo,
 ) -> Tuple[FileState, owncloud.FileInfo]:
-    if file_info.path.endswith(CHUNKED_SUFFIX) or file_info.path.endswith(CHUNKED_SUFFIX + "/"):
+    if file_info.path.endswith(CHUNKED_SUFFIX) or file_info.path.endswith(
+        CHUNKED_SUFFIX + "/"
+    ):
         return FileStateExistsChunked, file_info
     elif file_info.file_type == "dir":
         return FileStateIsDirUnchunked, file_info
@@ -208,7 +225,9 @@ def _check_file_state(
         file_info: owncloud.FileInfo = oc.file_info(remote_path)
         return _check_file_state_from_file_info(file_info)
     except owncloud.owncloud.HTTPResponseError:
-        if not remote_path.endswith(CHUNKED_SUFFIX) and not remote_path.endswith(CHUNKED_SUFFIX + "/"):
+        if not remote_path.endswith(CHUNKED_SUFFIX) and not remote_path.endswith(
+            CHUNKED_SUFFIX + "/"
+        ):
             return _check_file_state(oc, remote_path + CHUNKED_SUFFIX)
     return FileStateDoesNotExist, None
 
@@ -233,7 +252,7 @@ def _download_file(
     local_parent_dir = pathlib.Path(local_path).parent
     if not local_parent_dir.exists():
         os.makedirs(local_parent_dir)
-    oc.get_file(remote_path, local_file=local_path)
+    oc.get_file(remote_path=remote_path, local_file=local_path)
     return True
 
 
@@ -244,11 +263,16 @@ def _download_dir(
     local_base: str,
     file_info: owncloud.FileInfo,
 ) -> Optional[bool]:
-    remote_path = os.path.join(remote_base, relative_path)
-    local_path = os.path.join(local_base, relative_path)
     for remote_file in oc.list(file_info.path):
         file_state, remote_file_info = _check_file_state_from_file_info(remote_file)
-        _download(oc=oc, relative_path=_remove_commonpath(remote_file_info.path, remote_base), remote_base=remote_base, local_base=local_base, file_state=file_state, file_info=remote_file_info)
+        _download(
+            oc=oc,
+            relative_path=_remove_commonpath(remote_file_info.path, remote_base),
+            remote_base=remote_base,
+            local_base=local_base,
+            file_state=file_state,
+            file_info=remote_file_info,
+        )
     return True
 
 
@@ -258,9 +282,8 @@ def _download(
     remote_base: str,
     local_base: str,
     file_state: FileState,
-    file_info: owncloud.FileInfo
+    file_info: owncloud.FileInfo,
 ) -> Optional[bool]:
-    remote_path = os.path.join(remote_base, relative_path)
     if file_state == FileStateIsDirUnchunked:
         _download_dir(
             oc=oc,
@@ -273,10 +296,17 @@ def _download(
         if relative_path == "":
             local_file_path = local_base
         else:
-            local_file_path = os.path.join(local_base, relative_path.replace(CHUNKED_SUFFIX,""))
+            local_file_path = os.path.join(
+                local_base, relative_path.replace(CHUNKED_SUFFIX, "")
+            )
         _chunked_download(oc=oc, remote_path=file_info.path, local_path=local_file_path)
     elif file_state == FileStateExists:
-        _download_file(oc=oc, relative_path=_remove_commonpath(file_info.path, remote_base), remote_base=remote_base, local_base=local_base)
+        _download_file(
+            oc=oc,
+            relative_path=_remove_commonpath(file_info.path, remote_base),
+            remote_base=remote_base,
+            local_base=local_base,
+        )
     return True
 
 

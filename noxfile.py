@@ -5,6 +5,7 @@ from nox_poetry import Session, session
 def tests(session: Session) -> None:
     args = session.posargs or ["-m", "not slow", "--cov=nephelai", "--cov-report=xml"]
     session.install(".[all]")
+    session.install("numpy")
     session.install("pytest")
     session.install("pytest-cov")
     session.install("pytest-mock")
@@ -37,7 +38,7 @@ def style_checking(session: Session) -> None:
         "darglint",
         "pydocstyle",
     )
-    session.run("pflake8", "--docstring-style", "sphinx", *args)
+    session.run("pflake8", "--docstring-style", "google", *args)
 
 
 @session()

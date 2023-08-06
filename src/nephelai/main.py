@@ -56,8 +56,6 @@ def upload_with_fs(
 
 @app.command()
 def download(remote_path: str, local_path: Optional[str] = None):
-    print(remote_path)
-    print(local_path)
     nephelai_download(remote_path=remote_path, local_path=local_path)
 
 
