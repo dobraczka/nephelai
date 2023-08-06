@@ -23,6 +23,7 @@ NEXTCLOUD_FOLDER_URI="uri_of_the_shared_folder"
 NEXTCLOUD_FOLDER_PW="pw_of_the_folder"
 ```
 Then you can interact with the folder in a variety of ways.
+Alternatively, you can set this environment variables yourself with your preferred method.
 
 Via CLI:
 --------
