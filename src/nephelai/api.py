@@ -6,7 +6,7 @@ from typing import Final, Literal, Optional, Tuple, Union
 
 import bitmath
 import owncloud
-from dotenv import dotenv_values
+from dotenv import load_dotenv
 from tqdm.auto import tqdm, trange
 
 _DEFAULT_CHUNK_SIZE = 10 * 1024 * 1024
@@ -167,10 +167,10 @@ def upload(
             chunk_size = int(chunk_size)
         except ValueError:
             chunk_size = int(bitmath.parse_string(chunk_size).bytes)
-    config = dotenv_values()
+    load_dotenv()
     oc = owncloud.Client.from_public_link(
-        config[NEXTCLOUD_FOLDER_URI_KEY],
-        folder_password=config[NEXTCLOUD_FOLDER_PW_KEY],
+        os.environ[NEXTCLOUD_FOLDER_URI_KEY],
+        folder_password=os.environ[NEXTCLOUD_FOLDER_PW_KEY],
         debug=debug,
     )
     if file_to_upload.is_dir():
@@ -323,10 +323,10 @@ def download(remote_path: str, local_path: Optional[str] = None) -> Optional[boo
     Returns:
         True if successful, else None
     """
-    config = dotenv_values()
+    load_dotenv()
     oc = owncloud.Client.from_public_link(
-        config[NEXTCLOUD_FOLDER_URI_KEY],
-        folder_password=config[NEXTCLOUD_FOLDER_PW_KEY],
+        os.environ[NEXTCLOUD_FOLDER_URI_KEY],
+        folder_password=os.environ[NEXTCLOUD_FOLDER_PW_KEY],
     )
     if local_path is None:
         local_path = pathlib.Path(remote_path).name
