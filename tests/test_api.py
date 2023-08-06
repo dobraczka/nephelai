@@ -1,6 +1,7 @@
 import pathlib
 import os
 
+import uuid
 import numpy as np
 import owncloud
 import pytest
@@ -9,7 +10,9 @@ from dotenv import load_dotenv
 from nephelai import download, upload
 from nephelai.api import NEXTCLOUD_FOLDER_PW_KEY, NEXTCLOUD_FOLDER_URI_KEY
 
-remote_tmpdir = "pytest/remote_tmpdir"
+uuid_dir = str(uuid.uuid4())
+remote_tmp_dir_base = "pytest"
+remote_tmpdir = f"{remote_tmp_dir_base}/remote_tmpdir/{uuid_dir}"
 
 
 @pytest.fixture(autouse=True)
@@ -22,7 +25,7 @@ def cleanup():
         os.environ[NEXTCLOUD_FOLDER_URI_KEY],
         folder_password=os.environ[NEXTCLOUD_FOLDER_PW_KEY],
     )
-    oc.delete(str(pathlib.Path(remote_tmpdir).parent))
+    oc.delete(remote_tmp_dir_base)
 
 
 @pytest.mark.parametrize("chunk_size", ["1KiB", "100MiB"])
@@ -31,7 +34,7 @@ def test_upload_and_download_folder(chunk_size, tmpdir):
     assert upload(resources_path, remote_tmpdir, chunk_size=chunk_size)
     dl_path = tmpdir.mkdir("tests")
     assert download(remote_tmpdir, str(dl_path))
-    dl_path_folder = dl_path.join("remote_tmpdir")
+    dl_path_folder = dl_path.join(uuid_dir)
 
     assert len(dl_path_folder.listdir()) == 2
 
