@@ -7,6 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2023-08-07
 
-First release containing dummy_pandas and dummy_triples function
+First release
 
 [0.1.0]: https://github.com/dobraczka/nephelai/releases/tag/v0.1.0
