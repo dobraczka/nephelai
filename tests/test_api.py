@@ -1,7 +1,7 @@
-import pathlib
 import os
-
+import pathlib
 import uuid
+
 import numpy as np
 import owncloud
 import pytest
