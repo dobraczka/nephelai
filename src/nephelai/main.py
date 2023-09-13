@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
+import owncloud
 import typer
 from typing_extensions import Annotated
 
@@ -28,12 +29,14 @@ def upload(
     chunk_size: str = "100MiB",
     debug: bool = False,
 ):
-    nephelai_upload(
+    res = nephelai_upload(
         file_to_upload=file_to_upload,
         nc_path=nc_path,
         chunk_size=chunk_size,
         debug=debug,
     )
+    if res is not None:
+        typer.echo("Successfully uploaded '{file_to_upload}'!")
 
 
 @app.command()
@@ -57,14 +60,26 @@ def upload_with_fs(
 
 @app.command()
 def download(remote_path: str, local_path: Optional[str] = None):
-    nephelai_download(remote_path=remote_path, local_path=local_path)
+    res = nephelai_download(remote_path=remote_path, local_path=local_path)
+    if res is None:
+        typer.echo(f"Path '{remote_path}' does not exist...")
+    else:
+        typer.echo(f"Successfully downloaded '{remote_path}'!")
 
 
 @app.command()
 def ls(remote_path: str):
     oc = get_oc()
-    for file in oc.list(remote_path):
-        typer.echo(file.path)
+    try:
+        file_list = oc.list(remote_path)
+        typer.echo(f"Listing files in '{remote_path}':")
+        for file in file_list:
+            typer.echo(file.path)
+    except owncloud.owncloud.HTTPResponseError as err:
+        if err.status_code == 404:
+            typer.echo(f"Path '{remote_path}' does not exist...")
+        else:
+            raise err
 
 
 if __name__ == "__main__":
