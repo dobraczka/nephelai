@@ -1,4 +1,5 @@
 from pathlib import Path
+import owncloud
 from typing import Optional
 
 import typer
@@ -57,14 +58,22 @@ def upload_with_fs(
 
 @app.command()
 def download(remote_path: str, local_path: Optional[str] = None):
-    nephelai_download(remote_path=remote_path, local_path=local_path)
+    res = nephelai_download(remote_path=remote_path, local_path=local_path)
+    if res is None:
+        typer.echo(f"Path '{remote_path}' does not exist...")
 
 
 @app.command()
 def ls(remote_path: str):
     oc = get_oc()
-    for file in oc.list(remote_path):
-        typer.echo(file.path)
+    try:
+        for file in oc.list(remote_path):
+            typer.echo(file.path)
+    except owncloud.owncloud.HTTPResponseError as err:
+        if err.status_code == 404:
+            typer.echo(f"Path '{remote_path}' does not exist...")
+        else:
+            raise err
 
 
 if __name__ == "__main__":

@@ -335,6 +335,8 @@ def download(remote_path: str, local_path: Optional[str] = None) -> Optional[boo
     if not remote_path.startswith("/"):
         remote_path = "/" + remote_path
     file_state, file_info = _check_file_state(oc=oc, remote_path=remote_path)
+    if file_state == FileStateDoesNotExist:
+        return None
     if file_state == FileStateIsDirUnchunked:
         assert file_info  # for mypy
         remote_dir_name = pathlib.Path(file_info.path).name
