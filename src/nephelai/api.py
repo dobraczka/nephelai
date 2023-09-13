@@ -6,7 +6,7 @@ from typing import Final, Literal, Optional, Tuple, Union
 
 import bitmath
 import owncloud
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from tqdm.auto import tqdm, trange
 
 _DEFAULT_CHUNK_SIZE = 10 * 1024 * 1024
@@ -28,6 +28,15 @@ FileState = Literal[
     "FILE_DOES_NOT_EXIST",
 ]
 
+def get_oc():
+    if not find_dotenv():
+        load_dotenv(".env")
+    else:
+        load_dotenv()
+    return owncloud.Client.from_public_link(
+        os.environ[NEXTCLOUD_FOLDER_URI_KEY],
+        folder_password=os.environ[NEXTCLOUD_FOLDER_PW_KEY],
+    )
 
 def _remove_commonpath(full_path: str, base: str):
     return os.path.relpath(full_path, os.path.commonpath([base, full_path]))
@@ -167,12 +176,7 @@ def upload(
             chunk_size = int(chunk_size)
         except ValueError:
             chunk_size = int(bitmath.parse_string(chunk_size).bytes)
-    load_dotenv()
-    oc = owncloud.Client.from_public_link(
-        os.environ[NEXTCLOUD_FOLDER_URI_KEY],
-        folder_password=os.environ[NEXTCLOUD_FOLDER_PW_KEY],
-        debug=debug,
-    )
+    oc = get_oc()
     if file_to_upload.is_dir():
         create_nc_folders(file_to_upload, oc)
         for subfile in file_to_upload.iterdir():
@@ -323,11 +327,7 @@ def download(remote_path: str, local_path: Optional[str] = None) -> Optional[boo
     Returns:
         True if successful, else None
     """
-    load_dotenv()
-    oc = owncloud.Client.from_public_link(
-        os.environ[NEXTCLOUD_FOLDER_URI_KEY],
-        folder_password=os.environ[NEXTCLOUD_FOLDER_PW_KEY],
-    )
+    oc = get_oc()
     if local_path is None:
         local_path = pathlib.Path(remote_path).name
     if not remote_path.startswith("/"):
