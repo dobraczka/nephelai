@@ -6,7 +6,7 @@ from typing import Final, Literal, Optional, Tuple, Union
 
 import bitmath
 import owncloud
-from dotenv import load_dotenv, find_dotenv
+from dotenv import find_dotenv, load_dotenv
 from tqdm.auto import tqdm, trange
 
 _DEFAULT_CHUNK_SIZE = 10 * 1024 * 1024
@@ -28,6 +28,7 @@ FileState = Literal[
     "FILE_DOES_NOT_EXIST",
 ]
 
+
 def get_oc():
     if not find_dotenv():
         load_dotenv(".env")
@@ -37,6 +38,7 @@ def get_oc():
         os.environ[NEXTCLOUD_FOLDER_URI_KEY],
         folder_password=os.environ[NEXTCLOUD_FOLDER_PW_KEY],
     )
+
 
 def _remove_commonpath(full_path: str, base: str):
     return os.path.relpath(full_path, os.path.commonpath([base, full_path]))
