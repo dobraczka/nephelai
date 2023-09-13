@@ -67,6 +67,13 @@ This download the folder as:
         └── testfile.txt
 ```
 
+Using 
+
+```bash
+nephelai ls tests
+```
+you can show the files in the `tests` directory.
+
 You can get help for each command via the `--help` flag.
 
 Via Python:

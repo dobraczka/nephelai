@@ -5,6 +5,7 @@ import typer
 from typing_extensions import Annotated
 
 from .api import download as nephelai_download
+from .api import get_oc
 from .api import upload as nephelai_upload
 
 app = typer.Typer()
@@ -57,6 +58,13 @@ def upload_with_fs(
 @app.command()
 def download(remote_path: str, local_path: Optional[str] = None):
     nephelai_download(remote_path=remote_path, local_path=local_path)
+
+
+@app.command()
+def ls(remote_path: str):
+    oc = get_oc()
+    for file in oc.list(remote_path):
+        typer.echo(file.path)
 
 
 if __name__ == "__main__":
