@@ -1,7 +1,7 @@
 from pathlib import Path
-import owncloud
 from typing import Optional
 
+import owncloud
 import typer
 from typing_extensions import Annotated
 
